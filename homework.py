@@ -29,12 +29,12 @@ logger = logging.getLogger(__name__)
 
 
 def check_tokens():
-    """Проверяем наличие учетных данных"""
+    """Проверяем наличие учетных данных."""
     return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
 
 
 def send_message(bot, message):
-    """Бот отправляет сообщение в telegram"""
+    """Бот отправляет сообщение в telegram."""
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
     except telegram.error.TelegramError:
@@ -44,7 +44,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(timestamp):
-    """Опрашиваем API сервиса Практикум.Домашка"""
+    """Опрашиваем API сервиса Практикум.Домашка."""
     payload = {'from_date': timestamp}
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
@@ -61,7 +61,7 @@ def get_api_answer(timestamp):
 
 
 def check_response(response):
-    """Проверяем ответ API на соответствие документации"""
+    """Проверяем ответ API на соответствие документации."""
     if not isinstance(response, dict):
         raise TypeError('Ответ содержит не верный тип данных')
     if 'homeworks' in response:
@@ -77,7 +77,7 @@ def check_response(response):
 
 
 def parse_status(homeworks):
-    """Извлекаем из данных статус по домашней работе"""
+    """Извлекаем из данных статус по домашней работе."""
     if 'status' not in homeworks:
         raise Exception('В списке "homeworks" отсутсвует ключ "status"')
     if 'homework_name' not in homeworks:
