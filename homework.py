@@ -6,6 +6,7 @@ import telegram
 
 from http import HTTPStatus
 from dotenv import load_dotenv
+from logging.handlers import RotatingFileHandler
 
 load_dotenv()
 
@@ -25,7 +26,20 @@ HOMEWORK_VERDICTS = {
     'rejected': 'Работа проверена: у ревьюера есть замечания.'
 }
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    filename='global.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = RotatingFileHandler('local.log', maxBytes=50000000, backupCount=5)
+logger.addHandler(handler)
+formatter = logging.Formatter(
+    '%(asctime)s - %(levelname)s - %(message)s'
+)
+handler.setFormatter(formatter)
 
 
 def check_tokens():
@@ -35,6 +49,7 @@ def check_tokens():
 
 def send_message(bot, message):
     """Бот отправляет сообщение в telegram."""
+    logger.info(f'Бот отправил в telegram сообщение: {message}')
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
     except telegram.error.TelegramError:
@@ -46,13 +61,17 @@ def send_message(bot, message):
 def get_api_answer(timestamp):
     """Опрашиваем API сервиса Практикум.Домашка."""
     payload = {'from_date': timestamp}
+    logger.info('Опрашиваем API сервиса практикум.домашка.')
     try:
         response = requests.get(ENDPOINT, headers=HEADERS, params=payload)
     except Exception as error:
         raise Exception(f'Ошибка при запросе к API: {error}')
     if response.status_code != HTTPStatus.OK:
         status_code = response.status_code
-        logger.info(f'Код ответа сервера: {status_code}')
+        logger.info(
+            f'На запрос: {response.content};'
+            f'Код ответа сервера: {status_code}'
+        )
         raise Exception(f'Код ответа сервера: {status_code}')
     try:
         return response.json()
@@ -62,14 +81,14 @@ def get_api_answer(timestamp):
 
 def check_response(response):
     """Проверяем ответ API на соответствие документации."""
+    logger.info('Проверяем ответ API на соответствие документации')
     if not isinstance(response, dict):
         raise TypeError('Ответ содержит не верный тип данных')
-    if 'homeworks' in response:
-        homeworks = response['homeworks']
+    missed_keys = {'homeworks', 'current_date'} - response.keys()
+    if missed_keys:
+        logger.error(f'В ответе API нет ожидаемых ключей: {missed_keys}')
     else:
-        raise KeyError('В списке отсутсвует ключ "homeworks"')
-    if 'current_date' not in response:
-        raise KeyError('В списке отсутствует ключ "current_date".')
+        homeworks = response['homeworks']
     if isinstance(homeworks, list):
         return homeworks
     else:
@@ -78,12 +97,14 @@ def check_response(response):
 
 def parse_status(homeworks):
     """Извлекаем из данных статус по домашней работе."""
-    if 'status' not in homeworks:
-        raise Exception('В списке "homeworks" отсутсвует ключ "status"')
-    if 'homework_name' not in homeworks:
-        raise KeyError('В списке "homeworks" ключ "homework_name"')
-    homework_status = homeworks['status']
-    homework_name = homeworks['homework_name']
+    missed_keys = {'status', 'homework_name'} - homeworks.keys()
+    if missed_keys:
+        logger.error(
+            f'В списке "homeworks" нет ожидаемых ключей: {missed_keys}'
+        )
+    else:
+        homework_status = homeworks['status']
+        homework_name = homeworks['homework_name']
     if homework_status not in HOMEWORK_VERDICTS:
         raise Exception(f'Неизвестный статус работы: {homework_status}')
     verdict = HOMEWORK_VERDICTS[homework_status]
@@ -93,6 +114,9 @@ def parse_status(homeworks):
 def main():
     """Основная логика работы бота."""
     if not check_tokens():
+        # В задании: Обязательно должны логироваться такие события:
+        # отсутствие обязательных переменных окружения
+        # во время запуска бота (уровень CRITICAL).
         logger.critical('Учетные данные переданы с ошибкой или отсутствуют')
         raise ValueError('Учетные данные переданы с ошибкой или отсутствуют')
 
