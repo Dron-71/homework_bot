@@ -14,30 +14,28 @@ Python, Python-Telegram-bot, Yandex Practicum API
 
 ## Запуск проекта:
 
-Чтобы запустить проект:
+1. Клонирование репозитория:
 
-1. Перейдите по указанной ниже ссылке и клонируйте проект:
+```
+git clone git@github.com:Dron-71/homework_bot.git
+```
 
-https://git@github.com:Dron-71/homework_bot.git
+2. Установка и развертывание виртуального окружения:
 
-2. Установите виртуальное окружение командой:
+```
+python3 -m venv venv && source venv/bin/activate
+```
 
-python3 -m venv venv (если у Вас Linux)
+3. Установка зависимостей:
 
-python -m venv venv (если у Вас Windows)
-
-3. Активируйте виртуальное окружение:
-
-source venv/bin/activate (для Linux)
-
-source venv/script/activate (для Windows)
-
-4. Установите зависимости:
-
+```
 pip install -r requirements.txt
+```
 
-5. Запустите проект:
+4. Запуск проектf:
 
-python homework.py
+```
+python3 homework.py
+```
 
-6. Бот проинформирует Вас о статусе домашнего задания сообщением в Telegram:
+5. Бот проинформирует Вас о статусе домашнего задания сообщением в Telegram:
